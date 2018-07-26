@@ -11,3 +11,5 @@ osm_default_node_selector='application_node=yes'
 openshift_clusterid=owned
 openshift_cloudprovider_kind=aws
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
+openshift_disable_check=memory_availability,docker_image_availability
+

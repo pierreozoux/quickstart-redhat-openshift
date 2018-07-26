@@ -1,7 +1,7 @@
 #!/bin/bash -xe
 
 source ${P}
-
+hostnamectl set-hostname --static $(echo `hostname | cut -d. -f1`.eu-central-1.compute.internal)
 qs_enable_epel &> /var/log/userdata.qs_enable_epel.log || true
 
 qs_retry_command 25 aws s3 cp ${QS_S3URI}scripts/redhat_ose-register-${OCP_VERSION}.sh ~/redhat_ose-register.sh
@@ -43,7 +43,9 @@ qs_retry_command 25 ls /var/run/dbus/system_bus_socket
 systemctl restart NetworkManager
 systemctl restart systemd-logind
 
+sed -i '/proxy/s/^/#/g' /etc/yum.conf
 qs_retry_command 10 yum install -y https://s3-us-west-1.amazonaws.com/amazon-ssm-us-west-1/latest/linux_amd64/amazon-ssm-agent.rpm
+sed -i '/proxy/s/^#//g' /etc/yum.conf
 systemctl start amazon-ssm-agent
 systemctl enable amazon-ssm-agent
 
