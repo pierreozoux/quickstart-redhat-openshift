@@ -1531,6 +1531,7 @@ Resources:
       ConnectionSettings:
         IdleTimeout: 300
       CrossZone: true
+      Scheme: internal
       Subnets:
         - !Ref 'PublicSubnet1ID'
         - !Ref 'PublicSubnet2ID'
@@ -1567,6 +1568,7 @@ Resources:
       ConnectionSettings:
         IdleTimeout: 300
       CrossZone: true
+      Scheme: internal
       Subnets:
         - !Ref 'PublicSubnet1ID'
         - !Ref 'PublicSubnet2ID'
