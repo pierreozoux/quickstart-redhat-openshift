@@ -1246,7 +1246,6 @@ Resources:
         - DeviceName: /dev/sda1
           Ebs:
             VolumeSize: '80'
-            VolumeType: gp2
         - DeviceName: /dev/xvdb
           Ebs:
             VolumeSize: '110'
