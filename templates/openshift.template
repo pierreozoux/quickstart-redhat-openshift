@@ -23,6 +23,7 @@ Metadata:
           - DomainName
           - HostedZoneID
           - SubDomainPrefix
+          - CertificateArn
       - Label:
           default: Amazon EC2 Configuration
         Parameters:
@@ -114,6 +115,8 @@ Metadata:
         default: Existing AWS Service Broker Role ARN
       HawkularMetrics:
         default: Hawkular Metrics
+      CertificateArn:
+        default: Certificate Arn
       DomainName:
         default: Domain Name
       HostedZoneID:
@@ -303,6 +306,11 @@ Parameters:
     Type: String
     MaxLength: '32'
     Default: ""
+  CertificateArn:
+    Description: >-
+      OPTIONAL: Spicify the arn of the certificate that will be presented.
+    Type: String
+    Default: ""
   DomainName:
     Description: >-
       OPTIONAL: domain name configured for the cluster, if left blank self signed
@@ -412,6 +420,10 @@ Conditions:
   UseSubdomain: !Not
     - !Equals
       - !Ref 'SubDomainPrefix'
+      - ''
+  UseCustomCertificate: !Not
+    - !Equals
+      - !Ref 'CertificateArn'
       - ''
   UseCustomDomain: !Not
     - !Equals
@@ -1789,9 +1801,12 @@ Resources:
           SSLCertificateId: !If
             - UseCustomDomain
             - !If
-              - SetupRoute53
-              - !GetAtt 'ACMCertificateDNS.Arn'
-              - !Ref 'ACMCertificateEmail'
+              - UseCustomCertificate
+              - !Ref 'CertificateArn'
+              - !If
+                - SetupRoute53
+                - !GetAtt 'ACMCertificateDNS.Arn'
+                - !Ref 'ACMCertificateEmail'
             - !Ref AWS::NoValue
       HealthCheck:
         Target: HTTPS:443/console/
@@ -1826,9 +1841,12 @@ Resources:
           SSLCertificateId: !If
             - UseCustomDomain
             - !If
-              - SetupRoute53
-              - !GetAtt 'ACMCertificateDNS.Arn'
-              - !Ref 'ACMCertificateEmail'
+              - UseCustomCertificate
+              - !Ref 'CertificateArn'
+              - !If
+                - SetupRoute53
+                - !GetAtt 'ACMCertificateDNS.Arn'
+                - !Ref 'ACMCertificateEmail'
             - !Ref AWS::NoValue
         - InstancePort: '80'
           InstanceProtocol: TCP
