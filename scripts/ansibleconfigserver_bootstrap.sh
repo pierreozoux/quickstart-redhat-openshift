@@ -35,7 +35,7 @@ echo openshift_master_cluster_hostname=${INTERNAL_MASTER_ELBDNSNAME} >> /tmp/ope
 echo openshift_master_cluster_public_hostname=${MASTER_ELBDNSNAME} >> /tmp/openshift_inventory_userdata_vars
 
 if [ "$(echo ${MASTER_ELBDNSNAME} | grep -c '\.elb\.amazonaws\.com')" == "0" ] ; then
-    echo openshift_master_default_subdomain=${MASTER_ELBDNSNAME} >> /tmp/openshift_inventory_userdata_vars
+    echo openshift_master_default_subdomain=`echo ${MASTER_ELBDNSNAME} | cut -d. -f2-`  >> /tmp/openshift_inventory_userdata_vars
 fi
 
 if [ "${ENABLE_HAWKULAR}" == "True" ] ; then
