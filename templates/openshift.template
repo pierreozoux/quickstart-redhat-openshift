@@ -1194,7 +1194,7 @@ Resources:
             export RH_PASS='${RedhatSubscriptionPassword}'
             export OCP_VERSION=${OpenshiftContainerPlatformVersion}
             export LAUNCH_CONFIG=OpenShiftEtcdLaunchConfig
-            aws s3 cp ${!QS_S3URI}scripts/bootstrap.sh ./bootstrap.sh
+            aws s3 cp ${!QS_S3URI}scripts/bootstrap.sh ./bootstrap.sh || qs_err " cp bootstrap failed "
             chmod +x bootstrap.sh
             ./bootstrap.sh || qs_err " bootstrapping failed, see logs for details "
             cfn-signal -e $(qs_status) --stack ${AWS::StackName} --resource OpenShiftEtcdASG --region ${AWS::Region}
@@ -1765,7 +1765,7 @@ Resources:
             pip install awscli  &> /var/log/userdata.awscli_install.log || qs_err " awscli install failed "
             aws s3 cp ${!QS_S3URI}scripts/ansibleconfigserver_bootstrap.sh ./bootstrap.sh
             chmod +x bootstrap.sh
-            ./bootstrap.sh || qs_err " Openshift installation failed, see logs for details "
+            ./bootstrap.sh > /var/log/bootstrap.log
             cfn-signal -e $(qs_status) --stack ${AWS::StackName} --resource AnsibleConfigServer --region ${AWS::Region}
           -
             S3Region: !If [ GovCloudCondition, s3-us-gov-west-1, s3 ]
