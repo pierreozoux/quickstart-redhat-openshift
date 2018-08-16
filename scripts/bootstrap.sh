@@ -1,7 +1,7 @@
 #!/bin/bash -xe
 
 source ${P}
-
+hostnamectl set-hostname --static $(echo `hostname | cut -d. -f1`.eu-central-1.compute.internal)
 qs_enable_epel &> /var/log/userdata.qs_enable_epel.log || true
 
 qs_retry_command 25 aws s3 cp ${QS_S3URI}scripts/redhat_ose-register-${OCP_VERSION}.sh ~/redhat_ose-register.sh
