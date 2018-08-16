@@ -130,4 +130,8 @@ fi
 
 qs_retry_command 10 aws s3 cp ${QS_S3URI}scripts/templates/wp.json /root/wp.json
 oc -n openshift create -f /root/wp.json
+
+oc patch storageclass gp2 -p '{"metadata":{"annotations":{"storageclass.beta.kubernetes.io/is-default-class":"false"}}}'
+oc patch storageclass glusterfs-storage -p '{"metadata":{"annotations":{"storageclass.beta.kubernetes.io/is-default-class":"true"}}}'
+
 rm -rf /tmp/openshift_initial_*
