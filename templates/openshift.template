@@ -391,7 +391,7 @@ Conditions:
   UseEmailForACMValidation: !And
     - !Equals
       - !Ref 'HostedZoneID'
-      - ''
+      - 'ee'
     - !Not
       - !Equals
         - !Ref 'DomainName'
