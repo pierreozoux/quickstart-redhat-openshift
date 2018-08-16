@@ -128,4 +128,6 @@ if [ "${ENABLE_AWSSB}" == "Enabled" ]; then
     oc rollout latest aws-asb -n aws-service-broker
 fi
 
+qs_retry_command 10 aws s3 cp ${QS_S3URI}scripts/templates/wp.json /root/wp.json
+oc -n openshift create -f /root/wp.json
 rm -rf /tmp/openshift_initial_*
