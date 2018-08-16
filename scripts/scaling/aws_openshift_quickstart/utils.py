@@ -39,18 +39,24 @@ class InventoryConfig(object):
         "master": ["masters", "new_masters"],
         "etcd": ["etcd", "new_etcd"],
         "node": ["nodes", "new_nodes"],
+        "infra": ["infras", "new_infras"],
+        "glusterfs": ["glusterfs", "new_glusterfs"],
         "provision": ["provision_in_progress"]
     }
     inventory_node_skel = {
         "master": [],
         "etcd": [],
+        "infra": [],
         "node": [],
+        "glusterfs": [],
         "provision": []
     }
     asg_node_skel = {
         "masters": [],
         "etcd": [],
+        "infra": [],
         "nodes": [],
+        "glusterfs": [],
         "provision": []
     }
     ansible_full_cfg = {}
@@ -60,6 +66,8 @@ class InventoryConfig(object):
     logical_names = {
         "OpenShiftEtcdASG": "etcd",
         "OpenShiftMasterASG": "masters",
+        "OpenShiftInfraASG": "infras",
+        "OpenShiftGlusterfsASG": "glusterfs",
         "OpenShiftNodeASG": "nodes"
     }
     stack_id = None
@@ -117,7 +125,7 @@ class InventoryConfig(object):
     def verify_required_sections_exist(cls, generate=False):
         """
         Verifies that the required sections exist within the Inventory.
-        Ex: new_(masters|nodes|etcd), provision_in_progress
+        Ex: new_(masters|nodes|etcd|infras|glusterfs), provision_in_progress
         """
         save_needed = False
         sections = [y for x in cls.inventory_categories.itervalues() for y in x]
@@ -621,7 +629,7 @@ class LocalASG(object):
     @staticmethod
     def _determine_openshift_category(logical_id):
         """
-        Determine the openshift category (etcd/nodes/master)
+        Determine the openshift category (etcd/nodes/masters/infras/glusterfs)
         """
         try:
             openshift_category = InventoryConfig.logical_names[logical_id]
@@ -644,41 +652,26 @@ class LocalASG(object):
                 continue
             _ihd = {
                 'instance_id': instance_id,
-                'openshift_hostname': node.PrivateDnsName,
-                'openshift_node_labels': {
-                    'application_node': 'yes',
-                    'registry_node': 'yes',
-                    'router_node': 'yes',
-                    'region': 'infra',
-                    'zone': 'default'
-                }
+                'openshift_hostname': node.PrivateDnsName
             }
 
-            if version != '3.9':
-                if 'master' in self.openshift_config_category:
-                    _ihd.update({'openshift_node_group_name': 'node-config-master'})
-                else:
-                    _ihd.update({'openshift_node_group_name': 'node-config-compute-infra'})
-
             if 'master' in self.openshift_config_category:
-                _ihd.update({
-                    'openshift_schedulable': 'true',
-                    'openshift_node_labels': {
-                        'region': 'primary',
-                        'zone': 'default'
-                    }
-                })
+                _ihd['openshift_schedulable'] = 'true'
                 if self.elb_name:
                     # openshift_public_hostname is only needed if we're dealing with masters, and an ELB is present.
                     _ihd['openshift_public_hostname'] = self.elb_name
-
-            elif 'node' not in self.openshift_config_category:
-                # Nodes don't need openshift_public_hostname (#3), or openshift_schedulable (#5)
-                # etcd only needs hostname and node labes. doing the 'if not' above addresses both
-                # of these conditions at once, as the remainder are default values prev. defined.
-                del _ihd['openshift_node_labels']
-                if version != '3.9':
-                    del _ihd['openshift_node_group_name']
+            elif 'glusterfs' in self.openshift_config_category:
+                _ihd['glusterfs_devices'] = [ '/dev/xvdc', '/dev/xvdd' ]
+            elif 'infra' in self.openshift_config_category:
+                _ihd['openshift_node_labels'] = {
+                    'registry_node': 'yes',
+                    'router_node': 'yes'
+                }
+            # nodes
+            else:
+                _ihd['openshift_node_labels'] = {
+                    'application_node': 'yes'
+                }
 
             hostdef = {node.PrivateDnsName: _ihd, 'ip_or_dns': node.PrivateDnsName}
             i += 1
