@@ -1247,6 +1247,7 @@ Resources:
             VolumeSize: '80'
         - DeviceName: /dev/xvdb
           Ebs:
+            Encrypted: True
             VolumeSize: '110'
             VolumeType: gp2
       InstanceMonitoring: 'true'
@@ -1328,6 +1329,7 @@ Resources:
             VolumeSize: '80'
         - DeviceName: /dev/xvdb
           Ebs:
+            Encrypted: True
             VolumeSize: '110'
             VolumeType: gp2
       InstanceMonitoring: 'true'
