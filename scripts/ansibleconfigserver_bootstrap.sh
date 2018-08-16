@@ -35,7 +35,7 @@ echo openshift_master_cluster_hostname=${INTERNAL_MASTER_ELBDNSNAME} >> /tmp/ope
 echo openshift_master_cluster_public_hostname=${MASTER_ELBDNSNAME} >> /tmp/openshift_inventory_userdata_vars
 
 if [ "$(echo ${MASTER_ELBDNSNAME} | grep -c '\.elb\.amazonaws\.com')" == "0" ] ; then
-    echo openshift_master_default_subdomain=${MASTER_ELBDNSNAME} >> /tmp/openshift_inventory_userdata_vars
+    echo openshift_master_default_subdomain=dbcs-abbot.ose.db.de >> /tmp/openshift_inventory_userdata_vars
 fi
 
 if [ "${ENABLE_HAWKULAR}" == "True" ] ; then
@@ -130,4 +130,8 @@ fi
 
 qs_retry_command 10 aws s3 cp ${QS_S3URI}scripts/templates/wp.json /root/wp.json
 oc -n openshift create -f /root/wp.json
+
+oc patch storageclass gp2 -p '{"metadata":{"annotations":{"storageclass.beta.kubernetes.io/is-default-class":"false"}}}'
+oc patch storageclass glusterfs-storage -p '{"metadata":{"annotations":{"storageclass.beta.kubernetes.io/is-default-class":"true"}}}'
+
 rm -rf /tmp/openshift_initial_*
