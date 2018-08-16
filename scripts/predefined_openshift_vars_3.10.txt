@@ -10,6 +10,7 @@ openshift_router_selector: 'router_node=true'
 openshift_registry_selector: 'registry_node=true'
 openshift_clusterid: owned
 openshift_cloudprovider_kind: aws
+openshift_disable_check: memory_availability,docker_image_availability
 openshift_master_identity_providers:
 - name: htpasswd_auth
   login: 'true'
