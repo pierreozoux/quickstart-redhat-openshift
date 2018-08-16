@@ -57,18 +57,12 @@ qs_retry_command 10 yum -y update
 if [ "${OCP_VERSION}" == "3.9" ] ; then
     qs_retry_command 10 yum -y install atomic-openshift-utils
 fi
-qs_retry_command 10 yum -y install atomic-openshift-excluder atomic-openshift-docker-excluder httpd-tools java-1.8.0-openjdk-headless
+qs_retry_command 10 yum -y install atomic-openshift-excluder atomic-openshift-docker-excluder httpd-tools java-1.8.0-openjdk-headless openshift-ansible
 sed -i '/proxy/s/^/#/g' /etc/yum.conf
 qs_retry_command 10 yum install -y https://s3-us-west-1.amazonaws.com/amazon-ssm-us-west-1/latest/linux_amd64/amazon-ssm-agent.rpm
 sed -i '/proxy/s/^#//g' /etc/yum.conf
 systemctl start amazon-ssm-agent
 systemctl enable amazon-ssm-agent
-CURRENT_PLAYBOOK_VERSION=https://github.com/openshift/openshift-ansible/archive/openshift-ansible-${OCP_ANSIBLE_RELEASE}.tar.gz
-curl  --retry 5  -Ls ${CURRENT_PLAYBOOK_VERSION} -o openshift-ansible.tar.gz
-tar -zxf openshift-ansible.tar.gz
-rm -rf /usr/share/ansible
-mkdir -p /usr/share/ansible
-mv openshift-ansible-* /usr/share/ansible/openshift-ansible
 
 qs_retry_command 10 yum -y install atomic-openshift-excluder atomic-openshift-docker-excluder
 atomic-openshift-excluder unexclude
