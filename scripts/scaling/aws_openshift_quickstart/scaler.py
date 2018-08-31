@@ -8,12 +8,14 @@ import sys
 import os
 from .utils import InventoryConfig, ClusterGroups, InventoryScaling
 from .logger import LogUtil
+import yaml
+
 
 LogUtil.set_log_handler('/var/log/openshift-quickstart-scaling.log')
 log = LogUtil.get_root_logger()
 
 
-def generate_inital_inventory_nodes(write_hosts_to_temp=False):
+def generate_inital_inventory_nodes(write_hosts_to_temp=False, version='3.9'):
     """
     Generates the initial ansible inventory. Instances only.
     """
@@ -78,17 +80,22 @@ def generate_inital_inventory_nodes(write_hosts_to_temp=False):
     # Userdata: Applies as a result of Template conditions.
     # User-defined: Passed as input to the template.
 
-    # TODO: YAML Config
+    # TODO: migrate legacy config to yaml
     # - Pre-defined vars.
-    _pre_defined_vars = _varsplit('/tmp/openshift_inventory_predefined_vars')
-
-    # - Userdata vars.
-    _userdata_vars = _varsplit('/tmp/openshift_inventory_userdata_vars')
-
-    # - Userdefined vars
-    _user_defined_vars = _varsplit('/tmp/openshift_inventory_userdef_vars')
-
     _vars = {}
+    for f in ['/tmp/openshift_inventory_predefined_vars', '/tmp/openshift_inventory_userdata_vars', '/tmp/openshift_inventory_userdef_vars']:
+        _is_yaml = True
+        try:
+            _pre_defined_vars = yaml.safe_load(open(f))
+        except Exception:
+            _is_yaml=False
+            _pre_defined_vars = None
+        if type(_pre_defined_vars) != dict:
+            _is_yaml = False
+        if not _is_yaml:
+            _pre_defined_vars = _varsplit(f)
+        _vars.update(_pre_defined_vars)
+
     _children = {}
 
     # Children
@@ -101,13 +108,9 @@ def generate_inital_inventory_nodes(write_hosts_to_temp=False):
         }
         _children.update(group_hostdefs)
 
-    # Masters as nodes for the purposes of software installation.
+    # Masters/glusterfs as nodes for the purposes of software installation.
     _children['nodes']['hosts'].update(_children['masters']['hosts'])
-
-    # Pushing the var subgroups to the 'vars' variable.
-    _vars.update(_pre_defined_vars)
-    _vars.update(_userdata_vars)
-    _vars.update(_user_defined_vars)
+    _children['nodes']['hosts'].update(_children['glusterfs']['hosts'])
 
     # Pushing the children and vars into the skeleton
     _initial_ansible_skel['OSEv3']['children'].update(_children)
@@ -200,7 +203,7 @@ def scale_inventory_groups(ocp_version='3.7'):
             break
         if len(total_scaled_nodes) == 0:
             time.sleep(10)
-            ClusterGroups.setup()
+            ClusterGroups.setup(ocp_version)
             attempts += 1
         else:
             log.info("Great! The API contains scaling events that we need to process!")
@@ -353,7 +356,7 @@ def main():
                         action='store_true')
     parser.add_argument('--write-hosts-to-tempfiles', action='store_true', dest='write_to_temp',
                         help='Writes a list of initial hostnames to /tmp/openshift_initial_$CATEGORY')
-    parser.add_argument('--ocp-version', help='Openshift version, eg. "3.9", default is 3.7', default='3.7')
+    parser.add_argument('--ocp-version', help='Openshift version, eg. "3.10", default is 3.9', default='3.9')
     args = parser.parse_args()
 
     if args.debug:
@@ -369,8 +372,8 @@ def main():
     if args.generate_initial_inventory:
         InventoryConfig.initial_inventory = True
         InventoryConfig.setup()
-        ClusterGroups.setup()
-        generate_inital_inventory_nodes(write_hosts_to_temp=write_to_temp)
+        ClusterGroups.setup(args.ocp_version)
+        generate_inital_inventory_nodes(write_hosts_to_temp=write_to_temp, version=args.ocp_version)
         sys.exit(0)
 
     log.debug("Passed arguments: {} ".format(args.__dict__))
@@ -380,7 +383,7 @@ def main():
     # - account for that possibility.
     InventoryConfig.verify_required_sections_exist()
     InventoryConfig.populate_from_ansible_inventory()
-    ClusterGroups.setup()
+    ClusterGroups.setup(args.ocp_version)
 
     if args.scale_in_progress:
         InventoryConfig.scale = True
