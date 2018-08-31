@@ -1404,10 +1404,13 @@ Resources:
               ignoreErrors: 'false'
     Properties:
       KeyName: !Ref 'KeyPairName'
-      ImageId: !FindInMap
-        - AWSAMIRegionMap
-        - !Ref 'AWS::Region'
-        - RHEL74HVM
+      ImageId: !If
+        - UseCustomAmi
+        - !Ref 'AmiId'
+        - !FindInMap
+          - AWSAMIRegionMap
+          - !Ref 'AWS::Region'
+          - RHEL74HVM
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
