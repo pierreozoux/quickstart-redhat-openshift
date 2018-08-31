@@ -1423,7 +1423,8 @@ Resources:
       UserData: !Base64
         Fn::Sub:
           - |
-            #!/bin/bash -x
+            #!/bin/bash -xe
+            source /root/.bashrc
             export QSLOCATION=https://${QSS3BucketName}.${S3Region}.amazonaws.com/${QSS3KeyPrefix}
             yum install -y git
             git clone https://github.com/aws-quickstart/quickstart-linux-utilities.git
@@ -1440,9 +1441,9 @@ Resources:
             export RH_PASS='${RedhatSubscriptionPassword}'
             export OCP_VERSION=${OpenshiftContainerPlatformVersion}
             export LAUNCH_CONFIG=OpenShiftEtcdLaunchConfig
-            aws s3 cp ${!QS_S3URI}scripts/bootstrap.sh ./bootstrap.sh
+            aws s3 cp ${!QS_S3URI}scripts/bootstrap.sh ./bootstrap.sh || qs_err " cp bootstrap failed "
             chmod +x bootstrap.sh
-            ./bootstrap.sh || qs_err " bootstrapping failed, see logs for details "
+            ./bootstrap.sh
             cfn-signal -e $(qs_status) --stack ${AWS::StackName} --resource OpenShiftEtcdASG --region ${AWS::Region}
           -
             S3Region: !If [ GovCloudCondition, s3-us-gov-west-1, s3 ]
@@ -1511,7 +1512,8 @@ Resources:
       UserData: !Base64
         Fn::Sub:
           - |
-            #!/bin/bash -x
+            #!/bin/bash -xe
+            source /root/.bashrc
             export QSLOCATION=https://${QSS3BucketName}.${S3Region}.amazonaws.com/${QSS3KeyPrefix}
             yum install -y git
             git clone https://github.com/aws-quickstart/quickstart-linux-utilities.git
@@ -1530,7 +1532,7 @@ Resources:
             export LAUNCH_CONFIG=OpenShiftNodesLaunchConfig
             aws s3 cp ${!QS_S3URI}scripts/bootstrap.sh ./bootstrap.sh
             chmod +x bootstrap.sh
-            ./bootstrap.sh || qs_err " bootstrapping failed, see logs for details "
+            ./bootstrap.sh
             cfn-signal -e $(qs_status) --stack ${AWS::StackName} --resource OpenShiftNodeASG --region ${AWS::Region}
           -
             S3Region: !If [ GovCloudCondition, s3-us-gov-west-1, s3 ]
@@ -1599,7 +1601,8 @@ Resources:
       UserData: !Base64
         Fn::Sub:
           - |
-            #!/bin/bash -x
+            #!/bin/bash -xe
+            source /root/.bashrc
             export QSLOCATION=https://${QSS3BucketName}.${S3Region}.amazonaws.com/${QSS3KeyPrefix}
             yum install -y git
             git clone https://github.com/aws-quickstart/quickstart-linux-utilities.git
@@ -1619,7 +1622,7 @@ Resources:
             export INTERNAL_MASTER_ELBDNSNAME=${OpenShiftMasterInternalELB.DNSName}
             aws s3 cp ${!QS_S3URI}scripts/bootstrap.sh ./bootstrap.sh
             chmod +x bootstrap.sh
-            ./bootstrap.sh || qs_err " bootstrapping failed, see logs for details "
+            ./bootstrap.sh
             echo "$(curl http://169.254.169.254/latest/meta-data/local-ipv4) ${OpenShiftMasterInternalELB.DNSName}" >> /etc/hosts
             cfn-signal -e $(qs_status) --stack ${AWS::StackName} --resource OpenShiftMasterASG --region ${AWS::Region}
           -
@@ -1789,6 +1792,7 @@ Resources:
       ConnectionSettings:
         IdleTimeout: 300
       CrossZone: true
+      Scheme: internal
       Subnets:
         - !Ref 'PublicSubnet1ID'
         - !Ref 'PublicSubnet2ID'
@@ -1828,6 +1832,7 @@ Resources:
       ConnectionSettings:
         IdleTimeout: 300
       CrossZone: true
+      Scheme: internal
       Subnets:
         - !Ref 'PublicSubnet1ID'
         - !Ref 'PublicSubnet2ID'
@@ -2004,7 +2009,8 @@ Resources:
       UserData: !Base64
         Fn::Sub:
           - |
-            #!/bin/bash -x
+            #!/bin/bash -xe
+            source /root/.bashrc
             export QSLOCATION=https://${QSS3BucketName}.${S3Region}.amazonaws.com/${QSS3KeyPrefix}
             export ENABLE_HAWKULAR=${HawkEnable}
             export GET_ANSIBLE_FROM_GIT=${AnsibleFromGit}
@@ -2035,7 +2041,7 @@ Resources:
             pip install awscli  &> /var/log/userdata.awscli_install.log || qs_err " awscli install failed "
             aws s3 cp ${!QS_S3URI}scripts/ansibleconfigserver_bootstrap.sh ./bootstrap.sh
             chmod +x bootstrap.sh
-            ./bootstrap.sh || qs_err " Openshift installation failed, see logs for details "
+            ./bootstrap.sh > /var/log/bootstrap.log
             cfn-signal -e $(qs_status) --stack ${AWS::StackName} --resource AnsibleConfigServer --region ${AWS::Region}
           -
             S3Region: !If [ GovCloudCondition, s3-us-gov-west-1, s3 ]
