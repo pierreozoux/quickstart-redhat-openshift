@@ -172,7 +172,7 @@ Parameters:
     Description: 'OPTIONAL: Id of a KmsKey that will be used to encrypt all volumes.
       Keep in mind that the key policy should allow use of the key from AWSServiceRoleForAutoScaling.
       If no values are entered, volumes will not be encrypted.'
-    Type: AWS::KMS::Key::Id
+    Type: String
     Default: ''
   PrivateSubnet1ID:
     Description: ID of private subnet 1 in Availability Zone 1 for the Workload (e.g.,
@@ -1492,14 +1492,6 @@ Resources:
           Ebs:
             VolumeSize: 80
             VolumeType: gp2
-            Encrypted: !If
-              - EncryptVolumes
-              - True
-              - False
-            KmsKeyId: !If
-              - EncryptVolumes
-              - !Ref 'KmsKeyId'
-              - !Ref 'AWS::NoValue'
         - DeviceName: /dev/xvdb
           Ebs:
             VolumeSize: 110
@@ -1508,10 +1500,6 @@ Resources:
               - EncryptVolumes
               - True
               - False
-            KmsKeyId: !If
-              - EncryptVolumes
-              - !Ref 'KmsKeyId'
-              - !Ref 'AWS::NoValue'
       InstanceMonitoring: 'true'
       IamInstanceProfile: !Ref 'SetupRoleProfile'
       InstanceType: !Ref 'NodesInstanceType'
@@ -1592,14 +1580,6 @@ Resources:
           Ebs:
             VolumeSize: '80'
             VolumeType: gp2
-            Encrypted: !If
-              - EncryptVolumes
-              - True
-              - False
-            KmsKeyId: !If
-              - EncryptVolumes
-              - !Ref 'KmsKeyId'
-              - !Ref 'AWS::NoValue'
         - DeviceName: /dev/xvdb
           Ebs:
             VolumeSize: 110
@@ -1608,10 +1588,6 @@ Resources:
               - EncryptVolumes
               - True
               - False
-            KmsKeyId: !If
-              - EncryptVolumes
-              - !Ref 'KmsKeyId'
-              - !Ref 'AWS::NoValue'
       InstanceMonitoring: 'true'
       IamInstanceProfile: !Ref 'SetupRoleProfile'
       InstanceType: !Ref 'MasterInstanceType'
