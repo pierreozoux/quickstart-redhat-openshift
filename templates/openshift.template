@@ -28,6 +28,7 @@ Metadata:
           default: Amazon EC2 Configuration
         Parameters:
           - KeyPairName
+          - AmiId
       - Label:
           default: OpenShift Nodes Configuration
         Parameters:
@@ -62,6 +63,8 @@ Metadata:
     ParameterLabels:
       KeyPairName:
         default: SSH Key Name
+      AmiId:
+        default: AMI ID
       PrivateSubnet1ID:
         default: Private Subnet 1 ID
       PrivateSubnet2ID:
@@ -129,6 +132,14 @@ Metadata:
       ClusterName:
         default: Cluster Name
 Parameters:
+  AmiId:
+    Description: >-
+      OPTIONAL: bring your own AMI. In Enterprise environment, you might
+      need to bring your own AMI (with proxy, softwares, ...).
+      If the AMI is encrypted, keep in mind that the key policy should allow use of
+      the key from AWSServiceRoleForAutoScaling.
+      If left blank, we'll use the base RHEL image from your region.
+    Type: AWS::EC2::Image::Id
   KeyPairName:
     Description: Name of an existing EC2 key pair. All instances will launch with
       this key pair.
@@ -440,6 +451,10 @@ Conditions:
     - Condition: SetupRoute53
     - !Not
       - Condition: UseCustomCertificate
+  UseCustomAmi: !Not
+    - !Equals
+      - !Ref 'AmiId'
+      - ''
   UseCustomDomain: !Not
     - !Equals
       - !Ref 'DomainName'
@@ -1189,10 +1204,13 @@ Resources:
               ignoreErrors: 'false'
     Properties:
       KeyName: !Ref 'KeyPairName'
-      ImageId: !FindInMap
-        - AWSAMIRegionMap
-        - !Ref 'AWS::Region'
-        - RHEL74HVM
+      ImageId: !If
+        - UseCustomAmi
+        - !Ref 'AmiId'
+        - !FindInMap
+          - AWSAMIRegionMap
+          - !Ref 'AWS::Region'
+          - RHEL74HVM
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
@@ -1265,10 +1283,13 @@ Resources:
               ignoreErrors: 'false'
     Properties:
       KeyName: !Ref 'KeyPairName'
-      ImageId: !FindInMap
-        - AWSAMIRegionMap
-        - !Ref 'AWS::Region'
-        - RHEL74HVM
+      ImageId: !If
+        - UseCustomAmi
+        - !Ref 'AmiId'
+        - !FindInMap
+          - AWSAMIRegionMap
+          - !Ref 'AWS::Region'
+          - RHEL74HVM
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
@@ -1347,10 +1368,13 @@ Resources:
               ignoreErrors: 'false'
     Properties:
       KeyName: !Ref 'KeyPairName'
-      ImageId: !FindInMap
-        - AWSAMIRegionMap
-        - !Ref 'AWS::Region'
-        - RHEL74HVM
+      ImageId: !If
+        - UseCustomAmi
+        - !Ref 'AmiId'
+        - !FindInMap
+          - AWSAMIRegionMap
+          - !Ref 'AWS::Region'
+          - RHEL74HVM
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
@@ -1750,10 +1774,13 @@ Resources:
               ignoreErrors: 'false'
     Properties:
       KeyName: !Ref 'KeyPairName'
-      ImageId: !FindInMap
-        - AWSAMIRegionMap
-        - !Ref 'AWS::Region'
-        - RHEL74HVM
+      ImageId: !If
+        - UseCustomAmi
+        - !Ref 'AmiId'
+        - !FindInMap
+          - AWSAMIRegionMap
+          - !Ref 'AWS::Region'
+          - RHEL74HVM
       IamInstanceProfile: !Ref 'SetupRoleProfile'
       Tags:
         - Key: Name
