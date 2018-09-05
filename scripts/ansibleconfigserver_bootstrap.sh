@@ -1,4 +1,4 @@
-#!/bin/bash -xe
+#!/bin/bash -xeu
 
 source ${P}
 
@@ -36,7 +36,7 @@ echo openshift_master_cluster_hostname=${INTERNAL_MASTER_ELBDNSNAME} >> /tmp/ope
 echo openshift_master_cluster_public_hostname=${MASTER_ELBDNSNAME} >> /tmp/openshift_inventory_userdata_vars
 
 if [ "$(echo ${MASTER_ELBDNSNAME} | grep -c '\.elb\.amazonaws\.com')" == "0" ] ; then
-    echo openshift_master_default_subdomain=${MASTER_ELBDNSNAME} >> /tmp/openshift_inventory_userdata_vars
+    echo openshift_master_default_subdomain=`echo ${MASTER_ELBDNSNAME} | cut -d. -f2-`  >> /tmp/openshift_inventory_userdata_vars
 fi
 
 if [ "${ENABLE_HAWKULAR}" == "True" ] ; then
@@ -109,12 +109,12 @@ sed -i 's/#deprecation_warnings = True/deprecation_warnings = False/g' /etc/ansi
 
 qs_retry_command 50 ansible -m ping all
 
-ansible-playbook /usr/share/ansible/openshift-ansible/bootstrap_wrapper.yml > /var/log/bootstrap.log
+ansible-playbook /usr/share/ansible/openshift-ansible/bootstrap_wrapper.yml
 if [ "${OCP_VERSION}" == "3.7" ]; then
     ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml >> /var/log/bootstrap.log
 elif [ "${OCP_VERSION}" == "3.9" ]; then
-    ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml >> /var/log/bootstrap.log
-    ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/deploy_cluster.yml >> /var/log/bootstrap.log
+    ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml
+    ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/deploy_cluster.yml
 fi
 
 ansible masters -a "htpasswd -b /etc/origin/master/htpasswd admin ${OCP_PASS}"
