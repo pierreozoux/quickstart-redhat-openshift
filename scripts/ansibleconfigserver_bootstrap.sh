@@ -27,7 +27,11 @@ qs_retry_command 10 aws s3 cp ${QS_S3URI}scripts/scaling/aws_openshift_quickstar
 qs_retry_command 10 aws s3 cp ${QS_S3URI}scripts/scaling/aws_openshift_quickstart/utils.py /root/ose_scaling/aws_openshift_quickstart/utils.py
 qs_retry_command 10 aws s3 cp ${QS_S3URI}scripts/scaling/bin/aws-ose-qs-scale /root/ose_scaling/bin/aws-ose-qs-scale
 qs_retry_command 10 aws s3 cp ${QS_S3URI}scripts/scaling/setup.py /root/ose_scaling/setup.py
-qs_retry_command 10 aws s3 cp ${QS_S3URI}scripts/predefined_openshift_vars.txt /tmp/openshift_inventory_predefined_vars
+if [ "${OCP_VERSION}" == "3.9" ] ; then
+    qs_retry_command 10 aws s3 cp ${QS_S3URI}scripts/predefined_openshift_vars.txt /tmp/openshift_inventory_predefined_vars
+else
+    qs_retry_command 10 aws s3 cp ${QS_S3URI}scripts/predefined_openshift_vars_3.10.txt /tmp/openshift_inventory_predefined_vars
+fi
 pip install /root/ose_scaling
 
 qs_retry_command 10 cfn-init -v --stack ${AWS_STACKNAME} --resource AnsibleConfigServer --configsets cfg_node_keys --region ${AWS_REGION}
@@ -58,8 +62,6 @@ qs_retry_command 10 yum -y install wget git net-tools bind-utils iptables-servic
 pip uninstall -y urllib3
 qs_retry_command 10 yum -y update
 qs_retry_command 10 pip install urllib3
-qs_retry_command 10 yum -y install atomic-openshift-utils
-qs_retry_command 10 yum -y install atomic-openshift-excluder atomic-openshift-docker-excluder
 
 cd /tmp
 qs_retry_command 10 wget https://s3-us-west-1.amazonaws.com/amazon-ssm-us-west-1/latest/linux_amd64/amazon-ssm-agent.rpm
@@ -68,6 +70,12 @@ systemctl start amazon-ssm-agent
 systemctl enable amazon-ssm-agent
 rm ./amazon-ssm-agent.rpm
 cd -
+
+if [ "${OCP_VERSION}" == "3.9" ] ; then
+    qs_retry_command 10 yum -y install atomic-openshift-utils
+fi
+qs_retry_command 10 yum -y install atomic-openshift-excluder atomic-openshift-docker-excluder httpd-tools java-1.8.0-openjdk-headless
+qs_retry_command 10 yum install -y https://s3-us-west-1.amazonaws.com/amazon-ssm-us-west-1/latest/linux_amd64/amazon-ssm-agent.rpm
 
 if [ "${GET_ANSIBLE_FROM_GIT}" == "True" ]; then
   CURRENT_PLAYBOOK_VERSION=https://github.com/openshift/openshift-ansible/archive/openshift-ansible-${OCP_ANSIBLE_RELEASE}.tar.gz
@@ -100,7 +108,7 @@ export OPENSHIFTMASTERASG=$(aws cloudformation describe-stack-resources --stack-
 qs_retry_command 10 aws autoscaling suspend-processes --auto-scaling-group-name ${OPENSHIFTMASTERASG} --scaling-processes HealthCheck --region ${AWS_REGION}
 qs_retry_command 10 aws autoscaling attach-load-balancer-target-groups --auto-scaling-group-name ${OPENSHIFTMASTERASG} --target-group-arns ${OPENSHIFTMASTERINTERNALTGARN} --region ${AWS_REGION}
 
-/bin/aws-ose-qs-scale --generate-initial-inventory --write-hosts-to-tempfiles --debug
+/bin/aws-ose-qs-scale --generate-initial-inventory --ocp-version ${OCP_VERSION} --write-hosts-to-tempfiles --debug
 cat /tmp/openshift_ansible_inventory* >> /tmp/openshift_inventory_userdata_vars || true
 sed -i 's/#pipelining = False/pipelining = True/g' /etc/ansible/ansible.cfg
 sed -i 's/#log_path/log_path/g' /etc/ansible/ansible.cfg
@@ -110,12 +118,8 @@ sed -i 's/#deprecation_warnings = True/deprecation_warnings = False/g' /etc/ansi
 qs_retry_command 50 ansible -m ping all
 
 ansible-playbook /usr/share/ansible/openshift-ansible/bootstrap_wrapper.yml > /var/log/bootstrap.log
-if [ "${OCP_VERSION}" == "3.7" ]; then
-    ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml >> /var/log/bootstrap.log
-elif [ "${OCP_VERSION}" == "3.9" ]; then
-    ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml >> /var/log/bootstrap.log
-    ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/deploy_cluster.yml >> /var/log/bootstrap.log
-fi
+ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml >> /var/log/bootstrap.log
+ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/deploy_cluster.yml >> /var/log/bootstrap.log
 
 ansible masters -a "htpasswd -b /etc/origin/master/htpasswd admin ${OCP_PASS}"
 aws autoscaling resume-processes --auto-scaling-group-name ${OPENSHIFTMASTERASG} --scaling-processes HealthCheck --region ${AWS_REGION}
@@ -140,7 +144,7 @@ if [ "${ENABLE_AWSSB}" == "Enabled" ]; then
     oc create -f ./secrets.yaml -n aws-service-broker
     oc get configmap broker-config -n aws-service-broker -o yaml > aws-sb-config.yaml
     sed -i "s/^kind: ConfigMap$/    secrets:\n&/" aws-sb-config.yaml
-    for apb in $(echo 'dh-sqs dh-sns dh-route53 dh-rds dh-emr dh-redshift dh-elasticache dh-dynamodb dh-s3 dh-athena dh-kinesis dh-kms dh-lex dh-polly dh-rdsmariadb dh-rdspostgresql dh-rekognition dh-translate'); do
+    for apb in $(echo 'dh-sqs dh-sns dh-route53 dh-rdsmysql dh-emr dh-redshift dh-elasticache dh-dynamodb dh-s3 dh-athena dh-kinesis dh-kms dh-lex dh-polly dh-rdsmariadb dh-rdspostgresql dh-rekognition dh-translate'); do
         sed -i "s/^kind: ConfigMap$/      - {apb_name: ${apb}, secret: aws-secret, title: aws-secret}\n&/" aws-sb-config.yaml
     done
     oc replace -f ./aws-sb-config.yaml -n aws-service-broker
