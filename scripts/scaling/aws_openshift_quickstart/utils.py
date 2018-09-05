@@ -39,21 +39,18 @@ class InventoryConfig(object):
         "master": ["masters", "new_masters"],
         "etcd": ["etcd", "new_etcd"],
         "node": ["nodes", "new_nodes"],
-        "glusterfs": ["glusterfs", "new_glusterfs"],
         "provision": ["provision_in_progress"]
     }
     inventory_node_skel = {
         "master": [],
         "etcd": [],
         "node": [],
-        "glusterfs": [],
         "provision": []
     }
     asg_node_skel = {
         "masters": [],
         "etcd": [],
         "nodes": [],
-        "glusterfs": [],
         "provision": []
     }
     ansible_full_cfg = {}
@@ -63,8 +60,7 @@ class InventoryConfig(object):
     logical_names = {
         "OpenShiftEtcdASG": "etcd",
         "OpenShiftMasterASG": "masters",
-        "OpenShiftNodeASG": "nodes",
-        "OpenShiftGlusterASG": "glusterfs"
+        "OpenShiftNodeASG": "nodes"
     }
     stack_id = None
     ec2 = None
@@ -660,8 +656,6 @@ class LocalASG(object):
             if version != '3.9':
                 if 'master' in self.openshift_config_category:
                     _ihd.update({'openshift_node_group_name': 'node-config-master'})
-                elif 'glusterfs' in self.openshift_config_category:
-                    _ihd.update({'openshift_node_group_name': 'node-config-glusterfs'})
                 else:
                     _ihd.update({'openshift_node_group_name': 'node-config-compute-infra'})
 
@@ -676,10 +670,7 @@ class LocalASG(object):
                 if self.elb_name:
                     # openshift_public_hostname is only needed if we're dealing with masters, and an ELB is present.
                     _ihd['openshift_public_hostname'] = self.elb_name
-            elif 'glusterfs' in self.openshift_config_category:
-                _ihd.update({
-                    'openshift_schedulable': 'false'
-                })
+
             elif 'node' not in self.openshift_config_category:
                 # Nodes don't need openshift_public_hostname (#3), or openshift_schedulable (#5)
                 # etcd only needs hostname and node labes. doing the 'if not' above addresses both
