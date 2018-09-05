@@ -670,7 +670,6 @@ class LocalASG(object):
                 if self.elb_name:
                     # openshift_public_hostname is only needed if we're dealing with masters, and an ELB is present.
                     _ihd['openshift_public_hostname'] = self.elb_name
-
             elif 'node' not in self.openshift_config_category:
                 # Nodes don't need openshift_public_hostname (#3), or openshift_schedulable (#5)
                 # etcd only needs hostname and node labes. doing the 'if not' above addresses both

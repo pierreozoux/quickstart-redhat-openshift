@@ -118,6 +118,16 @@ def generate_inital_inventory_nodes(write_hosts_to_temp=False, version='3.9'):
             else:
                 _children['nodes']['hosts'][n]['openshift_node_group_name'] = 'node-config-compute-infra'
 
+    # Add openshift_node_group_name required >= v3.10
+    if version != '3.9':
+        for n in _children['nodes']['hosts'].keys():
+            if n in _children['masters']['hosts'].keys():
+                _children['nodes']['hosts'][n]['openshift_node_group_name'] = 'node-config-master'
+            if n in _children['glusterfs']['hosts'].keys():
+                _children['nodes']['hosts'][n]['openshift_node_group_name'] = 'node-config-glusterfs'
+            else:
+                _children['nodes']['hosts'][n]['openshift_node_group_name'] = 'node-config-compute-infra'
+
     # Pushing the children and vars into the skeleton
     _initial_ansible_skel['OSEv3']['children'].update(_children)
     _initial_ansible_skel['OSEv3']['vars'].update(_vars)
