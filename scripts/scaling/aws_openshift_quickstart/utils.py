@@ -646,7 +646,10 @@ class LocalASG(object):
             if node.State['Code'] not in [0, 16]:
                 i += 1
                 continue
-            _ihd = {'instance_id': instance_id}
+            _ihd = {
+              'instance_id': instance_id,
+              'openshift_hostname': node.PrivateDnsName
+            }
             if version == '3.9':
                 _ihd.update({
                     'openshift_node_labels': {
@@ -667,6 +670,7 @@ class LocalASG(object):
             if 'master' in self.openshift_config_category:
                 print("making schedulable")
                 _ihd.update({'openshift_schedulable': 'true'})
+                _ihd.update({'openshift_hostname': node.PrivateDnsName})
                 if version == '3.9':
                     _ihd.update({
                         'openshift_node_labels': {
