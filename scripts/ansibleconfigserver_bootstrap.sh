@@ -75,7 +75,6 @@ if [ "${OCP_VERSION}" == "3.9" ] ; then
     qs_retry_command 10 yum -y install atomic-openshift-utils
 fi
 qs_retry_command 10 yum -y install atomic-openshift-excluder atomic-openshift-docker-excluder httpd-tools java-1.8.0-openjdk-headless
-qs_retry_command 10 yum install -y https://s3-us-west-1.amazonaws.com/amazon-ssm-us-west-1/latest/linux_amd64/amazon-ssm-agent.rpm
 
 if [ "${GET_ANSIBLE_FROM_GIT}" == "True" ]; then
   CURRENT_PLAYBOOK_VERSION=https://github.com/openshift/openshift-ansible/archive/openshift-ansible-${OCP_ANSIBLE_RELEASE}.tar.gz
