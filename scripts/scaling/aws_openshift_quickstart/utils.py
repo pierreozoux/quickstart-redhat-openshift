@@ -644,6 +644,7 @@ class LocalASG(object):
                 continue
             _ihd = {
                 'instance_id': instance_id,
+                'openshift_hostname': node.PrivateDnsName,
                 'openshift_node_labels': {
                     'application_node': 'yes',
                     'registry_node': 'yes',
@@ -662,6 +663,7 @@ class LocalASG(object):
             if 'master' in self.openshift_config_category:
                 _ihd.update({
                     'openshift_schedulable': 'true',
+                    'openshift_hostname': node.PrivateDnsName,
                     'openshift_node_labels': {
                         'region': 'primary',
                         'zone': 'default'
