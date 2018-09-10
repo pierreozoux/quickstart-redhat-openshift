@@ -59,3 +59,4 @@ if [ -f /quickstart/post-install.sh ]
 then
   /quickstart/post-install.sh
 fi
+touch /tmp/bootstrapped
