@@ -23,3 +23,7 @@
   - debug:
       msg: running pre-scaleup for nodes
     when: nodeadd | length > 0
+  - name: Wait until the file /tmp/bootstrapped is present before continuing
+    wait_for:
+      path: /tmp/bootstrapped
+      timeout: 600
