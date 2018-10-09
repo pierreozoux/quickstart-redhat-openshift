@@ -1632,25 +1632,9 @@ Resources:
         - !Ref 'OpenShiftNodeSecurityGroup'
       Listeners:
         - InstancePort: '443'
-          InstanceProtocol: !If
-            - UseCustomDomain
-            - SSL
-            - TCP
+          InstanceProtocol: TCP
           LoadBalancerPort: '443'
-          Protocol: !If
-            - UseCustomDomain
-            - SSL
-            - TCP
-          SSLCertificateId: !If
-            - UseCustomDomain
-            - !If
-              - UseCustomCertificate
-              - !Ref 'CertificateArn'
-              - !If
-                - SetupRoute53
-                - !GetAtt 'ACMCertificateDNS.Arn'
-                - !Ref 'ACMCertificateEmail'
-            - !Ref AWS::NoValue
+          Protocol: TCP
         - InstancePort: '80'
           InstanceProtocol: TCP
           LoadBalancerPort: '80'
