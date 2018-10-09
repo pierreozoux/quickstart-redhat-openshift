@@ -12,9 +12,6 @@ Metadata:
           - PrivateSubnet1ID
           - PrivateSubnet2ID
           - PrivateSubnet3ID
-          - PublicSubnet1ID
-          - PublicSubnet2ID
-          - PublicSubnet3ID
           - RemoteAccessCIDR
           - ContainerAccessCIDR
       - Label:
@@ -78,12 +75,6 @@ Metadata:
         default: Private Subnet 2 ID
       PrivateSubnet3ID:
         default: Private Subnet 3 ID
-      PublicSubnet1ID:
-        default: Public Subnet 1 ID
-      PublicSubnet2ID:
-        default: Public Subnet 2 ID
-      PublicSubnet3ID:
-        default: Public Subnet 3 ID
       QSS3BucketName:
         default: Quick Start S3 Bucket Name
       QSS3KeyPrefix:
@@ -177,18 +168,6 @@ Parameters:
   PrivateSubnet3ID:
     Description: ID of private subnet 3 in Availability Zone 3 for the Workload (e.g.,
       subnet-b1f4a2cd)
-    Type: AWS::EC2::Subnet::Id
-  PublicSubnet1ID:
-    Description: ID of public subnet 1 in Availability Zone 1 for the ELB load balancer
-      (e.g., subnet-9bc642ac)
-    Type: AWS::EC2::Subnet::Id
-  PublicSubnet2ID:
-    Description: ID of public subnet 2 in Availability Zone 2 for the ELB load balancer
-      (e.g., subnet-e3246d8e)
-    Type: AWS::EC2::Subnet::Id
-  PublicSubnet3ID:
-    Description: ID of public subnet 3 in Availability Zone 3 for the ELB load balancer
-      (e.g., subnet-e324ad8e)
     Type: AWS::EC2::Subnet::Id
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
@@ -1865,9 +1844,9 @@ Resources:
       CrossZone: true
       Scheme: internal
       Subnets:
-        - !Ref 'PublicSubnet1ID'
-        - !Ref 'PublicSubnet2ID'
-        - !Ref 'PublicSubnet3ID'
+        - !Ref 'PrivateSubnet1ID'
+        - !Ref 'PrivateSubnet2ID'
+        - !Ref 'PrivateSubnet3ID'
       SecurityGroups:
         - !Ref 'OpenShiftSecurityGroup'
       Listeners:
@@ -1905,9 +1884,9 @@ Resources:
       CrossZone: true
       Scheme: internal
       Subnets:
-        - !Ref 'PublicSubnet1ID'
-        - !Ref 'PublicSubnet2ID'
-        - !Ref 'PublicSubnet3ID'
+        - !Ref 'PrivateSubnet1ID'
+        - !Ref 'PrivateSubnet2ID'
+        - !Ref 'PrivateSubnet3ID'
       SecurityGroups:
         - !Ref 'OpenShiftNodeSecurityGroup'
       Listeners:
@@ -2042,7 +2021,7 @@ Resources:
           DeviceIndex: '0'
           GroupSet:
             - !Ref 'OpenShiftSecurityGroup'
-          SubnetId: !Ref 'PublicSubnet1ID'
+          SubnetId: !Ref 'PrivateSubnet1ID'
       UserData: !Base64
         Fn::Sub:
           - |
