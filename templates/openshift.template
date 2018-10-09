@@ -1088,8 +1088,6 @@ Resources:
       DesiredCapacity: !Ref 'NumberOfMaster'
       MaxSize: !Ref 'NumberOfMaster'
       MinSize: '2'
-      HealthCheckType: ELB
-      HealthCheckGracePeriod: 2400
       LaunchConfigurationName: !Ref 'OpenShiftMasterASLaunchConfig'
       Tags:
         - Key: Name
