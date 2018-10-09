@@ -270,6 +270,7 @@ Parameters:
     Default: m4.xlarge
     AllowedValues:
       - t2.large
+      - t2.2xlarge
       - m4.xlarge
       - m4.2xlarge
       - m4.4xlarge
