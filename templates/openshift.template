@@ -522,9 +522,75 @@ Conditions:
       - !Ref 'OpenshiftContainerPlatformVersion'
       - '3.9'
 Resources:
+  kmskey:
+    Type: 'AWS::KMS::Key'
+    DeletionPolicy: Retain
+    Properties:
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+            - 'kms:Encrypt'
+            - 'kms:Decrypt'
+            - 'kms:ReEncrypt*'
+            - 'kms:GenerateDataKey*'
+            - 'kms:DescribeKey'
+            Effect: Allow
+            Principal:
+              AWS: !GetAtt 'LambdaExecutionRole.Arn'
+            Resource: '*'
+            Sid: 'Allow use of the key from Lambda Role.'
+          - Action:
+            - 'kms:Encrypt'
+            - 'kms:Decrypt'
+            - 'kms:ReEncrypt*'
+            - 'kms:GenerateDataKey*'
+            - 'kms:DescribeKey'
+            Effect: Allow
+            Principal:
+              AWS: !Join
+                  - ''
+                  - - 'arn:aws:iam::'
+                    - Ref: 'AWS::AccountId'
+                    - ':role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling'
+            Resource: '*'
+            Sid: 'Allow use of the key from AWSServiceRoleForAutoScaling'
+          - Action:
+            - 'kms:CreateGrant'
+            - 'kms:listGrants'
+            - 'kms:RevokeGrant'
+            Condition:
+              Bool:
+                'kms:GrantIsForAWSResource': 'true'
+            Effect: Allow
+            Principal:
+              AWS: !Join
+                - ''
+                - - 'arn:aws:iam::'
+                  - Ref: 'AWS::AccountId'
+                  - ':role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling'
+            Resource: '*'
+            Sid: 'Allow attachment of persistent resources from AWSServiceRoleForAutoScaling'
+          - Action: 'kms:*'
+            Effect: Allow
+            Principal:
+              AWS: !Join
+                - ''
+                - - 'arn:aws:iam::'
+                  - Ref: 'AWS::AccountId'
+                  - ':role/ServiceTeam'
+            Resource: '*'
+            Sid: 'Enable IAM User Permissions'
   RegistryBucket:
     Condition: GreaterThan39
     Type: "AWS::S3::Bucket"
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              KMSMasterKeyID: !GetAtt 'kmskey.Arn'
+              SSEAlgorithm: 'aws:kms'
   Route53HostedSubdomainZone:
     Condition: SetupSubdomain
     Type: AWS::Route53::HostedZone
@@ -638,6 +704,11 @@ Resources:
   LambdaZipsBucket:
     Type: AWS::S3::Bucket
     Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              KMSMasterKeyID: !GetAtt 'kmskey.Arn'
+              SSEAlgorithm: 'aws:kms'
       Tags: []
   CopyZips:
     Type: Custom::CopyZips
@@ -752,6 +823,14 @@ Resources:
                   - s3:GetObject
                 Resource:
                   - !Sub 'arn:aws:s3:::${QSS3BucketName}/${QSS3KeyPrefix}*'
+              - Action:
+                - 'kms:Encrypt'
+                - 'kms:Decrypt'
+                - 'kms:ReEncrypt*'
+                - 'kms:GenerateDataKey*'
+                - 'kms:DescribeKey'
+                Effect: Allow
+                Resource: 'arn:aws:kms:eu-central-1:350235694341:key/fe0d005f-f0b1-4871-ab46-672c53423738'
               - Effect: Allow
                 Action:
                   - s3:PutObject
@@ -829,6 +908,11 @@ Resources:
   OutputBucket:
     Type: AWS::S3::Bucket
     Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              KMSMasterKeyID: !GetAtt 'kmskey.Arn'
+              SSEAlgorithm: 'aws:kms'
       BucketName: !If
         - AutoGenOutputBucketName
         - !Ref 'OutputBucketName'
