@@ -1,11 +1,12 @@
 #!/bin/bash -eux
 
-aws s3 cp ./ s3://ocp-quickstart/quickstart-redhat-openshift --recursive --exclude ".git/*" --exclude "./tmp/*"
+aws s3 cp ./ s3://ocp-quickstart/${1}/quickstart-redhat-openshift --recursive --exclude ".git/*" --exclude "./tmp/*"
+aws s3 cp ./assets s3://ocp-quickstart/${1}/assets --recursive --exclude ".git/*" --exclude "./tmp/*"
 
 aws cloudformation deploy \
   --template-file ./templates/openshift.template \
   --s3-bucket ocp-quickstart \
-  --s3-prefix deploy \
+  --s3-prefix deploy-${1} \
   --capabilities CAPABILITY_IAM \
   --stack-name ${1} \
   --parameter-overrides \
@@ -17,6 +18,7 @@ aws cloudformation deploy \
       PublicSubnet2ID= \
       PublicSubnet3ID= \
       QSS3BucketName=ocp-quickstart \
+      QSS3KeyPrefix=${1}/quickstart-redhat-openshift/ \
       RemoteAccessCIDR=10.0.0.0/8 \
       ContainerAccessCIDR=10.0.0.0/8 \
       VPCID= \
