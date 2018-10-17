@@ -54,6 +54,21 @@ if [ "${ENABLE_HAWKULAR}" == "True" ] ; then
     echo openshift_metrics_cassandra_storage_type=dynamic >> /tmp/openshift_inventory_userdata_vars
 fi
 
+if [ "${ENABLE_EFK}" == "Enabled" ] ; then
+    echo openshift_logging_install_logging=true >> /tmp/openshift_inventory_userdata_vars
+    echo openshift_hosted_logging_elasticsearch_cluster_size=${EFK_CLUSTER_SIZE} >> /tmp/openshift_inventory_userdata_vars
+    echo openshift_logging_es_number_of_replicas=${EFK_REPLICAS} >> /tmp/openshift_inventory_userdata_vars
+
+    echo openshift_logging_es_memory_limit=${EFK_MEMORY}G >> /tmp/openshift_inventory_userdata_vars
+    echo openshift_logging_es_pvc_size=${EFK_STORAGE}G >> /tmp/openshift_inventory_userdata_vars
+    if [ "${ENABLE_GLUSTERFS}" == "Enabled" ] ; then
+        echo openshift_logging_es_pvc_storage_class_name=glusterfs-storage >> /tmp/openshift_inventory_userdata_vars
+    else
+        echo openshift_logging_es_pvc_storage_class_name=gp2 >> /tmp/openshift_inventory_userdata_vars
+    fi
+    echo 
+fi
+
 if [ "${ENABLE_AUTOMATIONBROKER}" == "Disabled" ] ; then
     echo ansible_service_broker_install=false >> /tmp/openshift_inventory_userdata_vars
 fi

@@ -42,6 +42,11 @@ Metadata:
           - OpenshiftContainerPlatformVersion
           - AWSServiceBroker
           - HawkularMetrics
+          - LoggingEFK
+          - LoggingEFKStorage
+          - LoggingEFKMemory
+          - LoggingEFKClusterSize
+          - LoggingEFKReplicas
           - AnsibleFromGit
           - ClusterName
           - GlusterFS
@@ -143,6 +148,16 @@ Metadata:
         default: Gluster Storage Encrypted
       AutomationBroker:
         default: OpenSift Automation Broker
+      LoggingEFK:
+        default: Install EFK stack
+      LoggingEFKClusterSize:
+        default: The number of cluster nodes for elastic search
+      LoggingEFKMemory:
+        default: The memory of the elastic search pods
+      LoggingEFKStorage:
+        default: The storage size for elastic search in GiB
+      LoggingEFKReplicas:
+        default: The number of replicas to store in the elastic search cluster
 Parameters:
   AmiId:
     Description: >-
@@ -400,6 +415,29 @@ Parameters:
     Description: Enable the OpenShift Automation Service Broker
     Type: String
     AllowedValues: [ Enabled, Disabled ]
+  LoggingEFK:
+    Default: Disabled
+    Description: Enable installation of EFK stack
+    Type: String
+    AllowedValues: [ Enabled, Disabled ]
+  LoggingEFKClusterSize:
+    Default: '3'
+    Description: Number of Elastic Search cluster nodes
+    Type: String
+    AllowedPattern: '^[13579]$|(^[1-9]+[13579]$)'
+  LoggingEFKMemory:
+    Description: Size in GB of the available memory for logging pods.
+    Type: Number
+    Default: 16
+  LoggingEFKStorage:
+    Description: Size in GB of the available storage (will create 3x ebs volumes of this size)
+    Type: Number
+    Default: 500
+  LoggingEFKReplicas:
+    Default: '1'
+    Description: Number of replicas of shards within the elastic search cluster
+    Type: String
+    AllowedPattern: '^[13579]$|(^[1-9]+[13579]$)'
 Rules:
   SubnetsInVPC:
     Assertions:
@@ -2058,6 +2096,11 @@ Resources:
             export SB_TABLE=${SbTable}
             export SB_VERSION=v1.0.0-beta.2
             export SB_ACCOUNTID=${AWS::AccountId}
+            export ENABLE_EFK=${LoggingEFK}
+            export EFK_STORAGE=${LoggingEFKStorage}
+            export EFK_MEMORY=${LoggingEFKMemory}
+            export EFK_CLUSTER_SIZE=${LoggingEFKClusterSize}
+            export EFK_REPLICAS=${LoggingEFKReplicas}
             yum install -y git
             git clone https://github.com/aws-quickstart/quickstart-linux-utilities.git
             export P=/quickstart-linux-utilities/quickstart-cfn-tools.source
