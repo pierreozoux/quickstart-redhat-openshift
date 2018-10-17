@@ -1255,6 +1255,38 @@ Resources:
                     - !Sub '${RegistryBucket.Arn}'
                     - !Sub '${RegistryBucket.Arn}/*'
                 - !Ref "AWS::NoValue"
+  ClusterEncryptionKey:
+    Type: "AWS::KMS::Key"
+    Properties:
+      Description: "KMS key for OCP cluster ${ClusterName}"
+      Enabled: true
+      EnableKeyRotation: false
+      KeyPolicy:
+        Version: "2012-10-17"
+        Id: "key-default-1"
+        Statement: 
+          - Sid: "Allow administration of the key"
+            Effect: "Allow"
+            Principal: 
+              AWS: !Join
+              - ''
+              - - 'arn:aws:iam::'
+                - !Ref 'AWS::AccountId'
+                - ':root'
+            Action: 
+            - "kms:*"
+            Resource: "*"
+          - Sid: "Allow use of the key"
+            Effect: "Allow"
+            Principal:
+              AWS: !GetAtt 'SetupRole.Arn'
+            Action: 
+            - "kms:Encrypt"
+            - "kms:Decrypt"
+            - "kms:ReEncrypt*"
+            - "kms:GenerateDataKey*"
+            - "kms:DescribeKey"
+            Resource: "*"
   SetupRoleProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
@@ -2096,6 +2128,7 @@ Resources:
             export SB_TABLE=${SbTable}
             export SB_VERSION=v1.0.0-beta.2
             export SB_ACCOUNTID=${AWS::AccountId}
+            export CLUSTER_ENCRYPTION_KEY=${ClusterEncryptionKey.Arn}
             export ENABLE_EFK=${LoggingEFK}
             export EFK_STORAGE=${LoggingEFKStorage}
             export EFK_MEMORY=${LoggingEFKMemory}
@@ -2161,3 +2194,7 @@ Outputs:
   ContainerAccessELBName:
     Description: Use this ELB to expose ports to the internet
     Value: !Sub "http://${ContainerAccessELB.DNSName}"
+  ClusterEncryptionKey:
+    Description: "Key for storage en-/decryption"
+    Value: !GetAtt ClusterEncryptionKey.Arn
+
